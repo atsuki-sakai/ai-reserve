@@ -2,35 +2,80 @@ import { Firestore } from "firebase-admin/firestore";
 import { IUser } from "../types/User";
 
 export class UserRepository {
-  private db: Firestore;
+  private readonly db: Firestore;
 
   constructor(db: Firestore) {
     this.db = db;
   }
 
-  async create(user: Omit<IUser, 'createdAt' | 'updatedAt'>): Promise<IUser> {
+  async get(userId: string): Promise<IUser | null> {
     try {
-      console.log("[Repository] Start create with:", JSON.stringify(user, null, 2));
+      console.log("[Repository] Getting user:", userId);
       
-      if (!user.lineId || !user.displayName || !user.phoneNumber) {
-        throw new Error("Required fields(lineId, displayName, phoneNumber) are missing in repository");
+      const userDocRef = this.db.collection("users").doc(userId);
+      console.log("[Repository] Document reference:", userDocRef.path);
+
+      const userDoc = await userDocRef.get();
+      console.log("[Repository] Document exists:", userDoc.exists);
+      
+      if (!userDoc.exists) {
+        console.log("[Repository] User not found");
+        return null;
       }
 
-      const now = new Date().toISOString();
-      const userData: IUser = {
-        ...user,
-        createdAt: now,
-        updatedAt: now,
+      const userData = userDoc.data();
+      console.log("[Repository] Raw Firestore data:", userData);
+
+      if (!userData) {
+        console.log("[Repository] User data is null");
+        return null;
+      }
+
+      const user: IUser = {
+        lineId: userId,
+        displayName: userData.displayName || "",
+        pictureUrl: userData.pictureUrl || "",
+        phoneNumber: userData.phoneNumber || ""
       };
-      await this.db.collection("users").doc(user.lineId).set(userData);
-      return userData;
+
+      console.log("[Repository] Returning user:", user);
+      return user;
+
     } catch (error) {
-      console.error("[Repository] Create error:", {
-        error,
-        type: error?.constructor?.name,
-        message: error instanceof Error ? error.message : "Unknown error"
-      });
-      throw this.handleError(error);
+      console.error("[Repository] Get user error:", error);
+      // エラーの詳細をログ出力
+      if (error instanceof Error) {
+        console.error("[Repository] Error details:", {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+      }
+      throw error;
+    }
+  }
+
+  async set(user: IUser): Promise<void> {
+    try {
+      await this.db
+        .collection("users")
+        .doc(user.lineId)
+        .set(user);
+    } catch (error) {
+      console.error("[Repository] Create user error:", error);
+      throw error;
+    }
+  }
+
+  async update(userId: string, data: Partial<IUser>): Promise<void> {
+    try {
+      await this.db
+        .collection("users")
+        .doc(userId)
+        .update(data);
+    } catch (error) {
+      console.error("[Repository] Update user error:", error);
+      throw error;
     }
   }
 
@@ -39,58 +84,6 @@ export class UserRepository {
       const docSnap = await this.db.collection("users").get();
       return docSnap.docs.map((doc) => doc.data() as IUser);
     } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  async get(userId: string): Promise<IUser | null> {
-    try {
-      const docSnap = await this.db.collection("users").doc(userId).get();
-      if (!docSnap.exists) {
-        return null;
-      }
-      return docSnap.data() as IUser;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  async update(userId: string, user: Partial<IUser>): Promise<{ success: boolean, user: IUser | null }> {
-    try {
-      console.log("[Repository] Updating user:", { userId, updates: user });
-
-      // 1. まず現在のユーザーデータを取得
-      const docRef = this.db.collection("users").doc(userId);
-      const docSnap = await docRef.get();
-
-      if (!docSnap.exists) {
-        console.log("[Repository] User not found:", userId);
-        return { success: false, user: null };
-      }
-
-      // 2. 更新データの準備
-      const currentData = docSnap.data() as IUser;
-      const updatedData = {
-        ...currentData,
-        ...user,
-        updatedAt: new Date().toISOString()
-      };
-
-      // 3. データ更新
-      await docRef.update(updatedData);
-      console.log("[Repository] User updated successfully");
-
-      return { 
-        success: true, 
-        user: updatedData 
-      };
-
-    } catch (error) {
-      console.error("[Repository] Update error:", {
-        error,
-        type: error?.constructor?.name,
-        message: error instanceof Error ? error.message : "Unknown error"
-      });
       throw this.handleError(error);
     }
   }

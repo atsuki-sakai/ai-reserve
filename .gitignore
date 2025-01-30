@@ -41,8 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # Firebase credentials
-*-service-account.json
-ai-reserve-service-account.json
+ai-reserve.json
 
 .env
 

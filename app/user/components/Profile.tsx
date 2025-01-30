@@ -1,11 +1,20 @@
 "use client";
-import { useLiff } from "@/components/providers/LiffProvider";
+import { useLiff } from "@/app/components/providers/LiffProvider";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/app/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/app/components/ui/avatar";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
 
 export function Profile() {
   const { liff, isLoggedIn } = useLiff();
@@ -19,17 +28,12 @@ export function Profile() {
           // LINEプロフィールの取得
           const lineProfile = await liff.getProfile();
           setProfile(lineProfile);
-
-          // Firestoreからユーザーデータの取得
           const response = await fetch(`/api/users/${lineProfile.userId}`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.data) {
-              setPhoneNumber(data.data.phoneNumber);
-            }
-          }
+          const { data } = await response.json();
+          setPhoneNumber(data.phoneNumber);
         } catch (error) {
           console.error("プロフィール取得エラー:", error);
+          setPhoneNumber("");
         }
       })();
     }
@@ -90,6 +94,10 @@ export function Profile() {
     }
   };
 
+  const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhoneNumber(e.target.value || "");
+  };
+
   return (
     <Card className="w-full max-w-md mx-auto my-8">
       <CardHeader>
@@ -123,7 +131,7 @@ export function Profile() {
                 type="tel"
                 placeholder="090-1234-5678"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={handlePhoneNumberChange}
               />
             </div>
 
@@ -138,7 +146,7 @@ export function Profile() {
               <Button
                 variant="default"
                 onClick={handleUpdate}
-                className="w-2/5 font-bold text-white"
+                className="w-2/5 font-bold bg-gray-500 text-white"
               >
                 更新
               </Button>

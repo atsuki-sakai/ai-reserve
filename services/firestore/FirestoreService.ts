@@ -2,34 +2,41 @@ import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { UserRepository } from "./repository/UserRepository";
 
-import serviceAccount from "../../ai-reserve-service-account.json";
+
+import serviceAccount from "../../ai-reserve.json";
+
 
 class FirestoreService {
-  private static instance: FirestoreService;
+  private static instance: FirestoreService | null = null;
   private readonly db;
   public readonly user: UserRepository;
 
   private constructor() {
-    // Firebase Adminの初期化
-    const app = !getApps().length 
-      ? initializeApp({
-          credential: cert(serviceAccount as any),
-          projectId: serviceAccount.project_id,
-        })
-      : getApps()[0];
+    try {
+      const apps = getApps();
+      const app = apps.length ? apps[0] : initializeApp({
+        credential: cert(serviceAccount as any),
+        projectId: serviceAccount.project_id,
+      });
+      this.db = getFirestore(app);
+      this.user = new UserRepository(this.db);
 
-    this.db = getFirestore(app);
-    this.user = new UserRepository(this.db);
+    } catch (error) {
+      console.error("[FirestoreService] Initialization error:", {
+        error,
+        type: error?.constructor?.name,
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+      throw error;
+    }
   }
-  
 
   public static getInstance(): FirestoreService {
     if (!FirestoreService.instance) {
+      console.log("[FirestoreService] Creating new instance");
       FirestoreService.instance = new FirestoreService();
     }
     return FirestoreService.instance;
   }
 }
-
-// シングルトン
 export const firestore = FirestoreService.getInstance();
