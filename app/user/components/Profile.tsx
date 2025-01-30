@@ -16,10 +16,17 @@ import {
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 
+interface LineProfile {
+  userId: string;
+  displayName: string;
+  pictureUrl?: string;
+  email?: string;
+}
+
 export function Profile() {
   const { liff, isLoggedIn } = useLiff();
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<LineProfile | null>(null);
 
   useEffect(() => {
     if (liff?.isLoggedIn()) {

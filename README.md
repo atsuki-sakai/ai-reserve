@@ -1,4 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# プロジェクト概要
+🔍 このプロジェクトは、Next.jsをベースに構築されたWebアプリケーションです。主な機能として、ユーザー認証、プロフィール管理、Firestoreを使用したデータ管理を提供します。
+
+### フロントエンド
+- Next.js: Reactフレームワーク
+- Tailwind CSS: スタイリング
+- Radix UI: UIコンポーネント
+
+### バックエンド
+- Next.js API Routes: APIエンドポイント (`app/api/users/route.ts`, `app/api/users/[userId]/route.ts`)
+- Firebase Admin: Firestoreとの連携
+
+## プロジェクト構造
+```
+app/
+  ├── api/
+  │   └── users/
+  │       └── [userId]/
+  ├── components/
+  │   └── providers/
+  │       └── LiffProvider.tsx
+  │   └── ui/
+  ├── user/
+  │   └── components/
+  │       └── Profile.tsx
+  ├── layout.tsx
+  └── page.tsx
+components/
+  └── providers/
+      └── LiffProvider.tsx
+lib/
+  └── utils.ts
+services/
+  └── firestore/
+      ├── FirestoreService.ts
+      └── repository/
+          └── UserRepository.ts
+```
+
+## 開発環境
+- Node.js
+- npm (または yarn, pnpm, bun)
 
 ## Getting Started
 
